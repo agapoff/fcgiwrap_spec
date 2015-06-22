@@ -43,7 +43,7 @@ following features:
 
 %build
 autoreconf -i
-%configure
+%configure --prefix=/
 make %{?_smp_mflags}
 
 
