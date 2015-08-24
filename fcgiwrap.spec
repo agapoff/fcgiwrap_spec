@@ -11,7 +11,7 @@ fi
 
 Name:		fcgiwrap
 Version:	1.1.0
-Release:	2qtx%{?dist}
+Release:	2%{?dist}
 Summary:	Simple FastCGI wrapper for CGI scripts
 Group:		System Environment/Daemons
 License:	BSD-like
@@ -90,7 +90,7 @@ fi
 
 
 %changelog
-* Mon Jun 22 2015 Vitaly Agapov <v.agapov@quotix.com> - 1.1.0-2qtx
+* Mon Jun 22 2015 Vitaly Agapov <v.agapov@quotix.com> - 1.1.0-2
 - Prepare spec for Quotix usage
 
 * Tue Apr 22 2014 Justin Zhang <schnell18[AT]gmail.com> - 1.1.0-1
