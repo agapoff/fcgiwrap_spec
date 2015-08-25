@@ -1,24 +1,12 @@
-%define systemd_test_str %(
-if [[ -z $(pkg-config --print-errors libsystemd-daemon 2>&1) ]]; then
-  echo "yes"
-else
-  echo "no"
-fi
-)
-%if "%{systemd_test_str}" == "yes"
-    %define with_systemd 1
-%endif
-
 Name:		fcgiwrap
 Version:	1.1.0
-Release:	2%{?dist}
+Release:	4%{?dist}
 Summary:	Simple FastCGI wrapper for CGI scripts
 Group:		System Environment/Daemons
 License:	BSD-like
 URL:		http://nginx.localdomain.pl/wiki/FcgiWrap
 Source0:	%{name}-%{version}.tgz
-BuildRequires:	autoconf automake fcgi-devel pkgconfig
-%{?with_systemd:BuildRequires:  systemd-devel systemd}
+BuildRequires:	autoconf automake fcgi-devel pkgconfig systemd-devel
 Requires:	fcgi
 
 
@@ -51,6 +39,12 @@ make %{?_smp_mflags}
 rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
 
+%if 0%{?el7:1}
+  %{__mkdir} -p %{buildroot}%{_unitdir}
+  cp %{_builddir}/%{name}-%{version}/systemd/fcgiwrap.service %{buildroot}%{_unitdir}
+  cp %{_builddir}/%{name}-%{version}/systemd/fcgiwrap.socket %{buildroot}%{_unitdir}
+%endif
+
 
 %clean
 rm -rf %{buildroot}
@@ -61,35 +55,44 @@ rm -rf %{buildroot}
 %{_sbindir}/fcgiwrap
 #TODO: figure out why the manpage file is compressed automatically
 %doc %{_mandir}/man8/fcgiwrap.8.gz
-%{?with_systemd:
-    %{_unitdir}/*.service
-    %{_unitdir}/*.socket
-}
+%if 0%{?el7:1}
+    %{_unitdir}/fcgiwrap.service
+    %{_unitdir}/fcgiwrap.socket
+%endif
 
 
 %post
 # enable socket activation for fcgiwrap
-if [[ -z $(pkg-config --print-errors libsystemd-daemon 2>&1) ]]; then
-    /usr/bin/systemctl enable fcgiwrap.socket
-    /usr/bin/systemctl start fcgiwrap.socket
+%if 0%{?el7:1}
+if [ $1 -eq 2 ]; then
+    /usr/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+fi
+/usr/bin/systemctl enable fcgiwrap.socket
+/usr/bin/systemctl start fcgiwrap.socket
 
-    cat <<BANNER
+cat <<BANNER
 ==================================================
 FCGI service fcgiwrap is ready!!!
 ==================================================
 BANNER
-fi
+%endif
 
 
 %preun
 # stop and disable socket activation for fcgiwrap
-if [[ -z $(pkg-config --print-errors libsystemd-daemon 2>&1) ]]; then
+%if 0%{?el7:1}
     /usr/bin/systemctl stop fcgiwrap.socket
     /usr/bin/systemctl disable fcgiwrap.socket
-fi
+%endif
 
 
 %changelog
+* Mon Aug 25 2015 Vitaly Agapov <v.agapov@quotix.com> - 1.1.0-4
+- Added BuildRequires systemd-devel
+
+* Mon Aug 24 2015 Vitaly Agapov <v.agapov@quotix.com> - 1.1.0-3
+- Install unit-files for CentOS7
+
 * Mon Jun 22 2015 Vitaly Agapov <v.agapov@quotix.com> - 1.1.0-2
 - Prepare spec for Quotix usage
 
